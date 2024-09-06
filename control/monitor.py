@@ -8,8 +8,8 @@ import schedule
 import time
 from django.conf import settings
 
-client = mqtt.Client(settings.MQTT_USER_PUB)
-
+#client = mqtt.Client(settings.MQTT_USER_PUB)
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1,settings.MQTT_USER_PUB)
 
 def analyze_data():
     # Consulta todos los datos de la última hora, los agrupa por estación y variable
