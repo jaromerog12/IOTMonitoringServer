@@ -84,7 +84,8 @@ def setup_mqtt():
     print("Iniciando cliente MQTT...", settings.MQTT_HOST, settings.MQTT_PORT)
     global client
     try:
-        client = mqtt.Client(settings.MQTT_USER_PUB)
+        #client = mqtt.Client(settings.MQTT_USER_PUB)
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1,settings.MQTT_USER_PUB)
         client.on_connect = on_connect
         client.on_disconnect = on_disconnect
 
