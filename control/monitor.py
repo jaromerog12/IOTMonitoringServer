@@ -61,61 +61,69 @@ def analyze_data():
     print(len(aggregation), "dispositivos revisados")
     print(alerts, "alertas enviadas")
 
+def get_temperature_values():
+    return Data.objects.filter(
+        base_time__gte=datetime.now() - timedelta(hours=1),
+        measurement__name='temperature'
+    ).values_list('value', flat=True)
+
+def get_temperature_details():
+    return Data.objects.filter(
+        base_time__gte=datetime.now() - timedelta(hours=1),
+        measurement__name='temperature'
+    ).select_related('station', 'measurement') \
+     .select_related('station__user', 'station__location') \
+     .select_related('station__location__city', 'station__location__state',
+                     'station__location__country') \
+     .values('station__user__username',
+             'measurement__name',
+             'measurement__max_value',
+             'measurement__min_value',
+             'station__location__city__name',
+             'station__location__state__name',
+             'station__location__country__name') \
+     .distinct()
+
 def analyze_temperature_variation():
     print("Analizando la variación de temperatura...")
 
-    temperatures = Data.objects.filter(
-        base_time__gte=datetime.now() - timedelta(hours=1),
-        measurement__name='temperature'
-    ).values_list('value', flat=True).order_by('base_time')
-
-    # Filtramos los datos de la última media hora
-    data = Data.objects.filter(
-        base_time__gte=datetime.now() - timedelta(hours=1),
-        measurement__name='temperatura')
-    aggregation = data.annotate(check_value=Avg('avg_value')) \
-        .select_related('station', 'measurement') \
-        .select_related('station__user', 'station__location') \
-        .select_related('station__location__city', 'station__location__state',
-                        'station__location__country') \
-        .values('check_value', 'station__user__username',
-                'measurement__name',
-                'measurement__max_value',
-                'measurement__min_value',
-                'station__location__city__name',
-                'station__location__state__name',
-                'station__location__country__name')
-
-    # Obtenemos los valores de temperatura
-    #temperatures = list(data.values_list('avg_value', flat=True).order_by('base_time'))
-
+    # Obtener los valores de temperatura
+    temperatures = get_temperature_values()
+    
     if not temperatures:
         print("No hay datos suficientes para analizar.")
         return
 
-    print(temperatures)
-    # Calculamos la variación
+    # Obtener los detalles necesarios
+    details = get_temperature_details()
+    
+    if not details:
+        print("No se encontraron detalles suficientes para configurar la alerta.")
+        return
+
+    # Asumiendo que todos los detalles son los mismos para todos los registros
+    detail = details[0]
+    
+    # Calcular la variación de la temperatura
     initial_temp = temperatures[0]  # Tomamos el primer valor del período
     current_temp = temperatures[-1]  # Tomamos el valor más reciente
     variation = abs(current_temp - initial_temp)  # Calculamos la variación absoluta
 
-    # Obtenemos los detalles necesarios para la alerta
-    latest_item = data.last()
-    variable = latest_item.measurement.name
-    max_value = latest_item.measurement.max_value or 0
-    min_value = latest_item.measurement.min_value or 0
-    country = latest_item.station.location.country.name
-    state = latest_item.station.location.state.name
-    city = latest_item.station.location.city.name
-    user = latest_item.station.user.username
+    # Obtener los detalles necesarios para la alerta
+    variable = detail["measurement__name"]
+    max_value = detail["measurement__max_value"] or 0
+    min_value = detail["measurement__min_value"] or 0
+    country = detail['station__location__country__name']
+    state = detail['station__location__state__name']
+    city = detail['station__location__city__name']
+    user = detail['station__user__username']
 
-    print(f"Variación de {variable} en los últimos 30 minutos: {variation}°C")
+    print(f"Variación de {variable} en los últimos 60 minutos: {variation}°C")
 
     # Evaluamos si la variación es mayor a un umbral (ejemplo: 5°C)
-    threshold = 5  # Define un umbral fijo
-    if variation > threshold:
-        message = f"ALERT: Variación de {variable} ha excedido el límite de {threshold} °C. " \
-                    f"Variación actual: {variation}°C"
+    if variation > max_value:
+        message = f"ALERT: Variación de {variable} ha excedido el límite de {max_value} °C. " \
+                  f"Variación actual: {variation}°C"
         topic = f'{country}/{state}/{city}/{user}/in'
 
         # Publicamos la alerta
