@@ -32,6 +32,9 @@ def analyze_data():
                 'station__location__city__name',
                 'station__location__state__name',
                 'station__location__country__name')
+    print("Nombres de mediciones en la base de datos:")
+    print(data.values_list('measurement__name', flat=True).distinct())
+
     alerts = 0
     for item in aggregation:
         alert = False
@@ -151,8 +154,8 @@ def start_cron():
     Inicia el cron que se encarga de ejecutar la función analyze_data cada 1 minutos.
     '''
     print("Iniciando cron...")
-    #schedule.every(1).minutes.do(analyze_data)
-    schedule.every(1).minutes.do(analyze_temperature_variation)
+    schedule.every(1).minutes.do(analyze_data)
+    #schedule.every(1).minutes.do(analyze_temperature_variation)
     print("Servicio de control iniciado")
     while 1:
         schedule.run_pending()
