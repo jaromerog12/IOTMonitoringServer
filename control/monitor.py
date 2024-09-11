@@ -64,11 +64,17 @@ def analyze_data():
 def analyze_temperature_variation():
     print("Analizando la variación de temperatura...")
 
+    temperatures = Data.objects.filter(
+        base_time__gte=datetime.now() - timedelta(hours=1),
+        measurement__name='temperature'
+    ).values_list('value', flat=True).order_by('base_time')
+
     # Filtramos los datos de la última media hora
     data = Data.objects.filter(
         base_time__gte=datetime.now() - timedelta(hours=1),
-        measurement__name='temperatura'
-        ).select_related('station', 'measurement') \
+        measurement__name='temperatura')
+    aggregation = data.annotate(check_value=Avg('avg_value')) \
+        .select_related('station', 'measurement') \
         .select_related('station__user', 'station__location') \
         .select_related('station__location__city', 'station__location__state',
                         'station__location__country') \
@@ -81,7 +87,7 @@ def analyze_temperature_variation():
                 'station__location__country__name')
 
     # Obtenemos los valores de temperatura
-    temperatures = list(data.values_list('avg_value', flat=True).order_by('base_time'))
+    #temperatures = list(data.values_list('avg_value', flat=True).order_by('base_time'))
 
     if not temperatures:
         print("No hay datos suficientes para analizar.")
