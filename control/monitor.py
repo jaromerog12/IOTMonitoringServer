@@ -96,8 +96,8 @@ def analyze_temperature_variation():
             user = item['station__user__username']
 
             # Evaluamos si la variación es mayor a un umbral (ejemplo: 5°C)
-            if variation > max_value:
-                message = f"ALERT: Variación de {variable} ha excedido el límite de {max_value} °C. " \
+            if variation > min_value:
+                message = f"ALERT: Variación de {variable} ha excedido el límite de {min_value} °C. " \
                           f"Variación actual: {variation}°C"
                 topic = f'{country}/{state}/{city}/{user}/in'
 
