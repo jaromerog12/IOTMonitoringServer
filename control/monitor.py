@@ -82,6 +82,7 @@ def analyze_temperature_variation():
                 'station__location__country__name')
 
     # Ahora calculamos la variación de la temperatura
+    print(f"Agregacion: {aggregation}")
     if aggregation:
         temperatures = [item['check_value'] for item in aggregation]
         initial_temp = temperatures[0]  # Tomamos el primer valor del período
