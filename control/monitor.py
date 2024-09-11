@@ -64,54 +64,46 @@ def analyze_temperature_variation():
     # Filtramos los datos de la última media hora
     data = Data.objects.filter(
         base_time__gte=datetime.now() - timedelta(minutes=30),
-        measurement__name='temperature'  # Aseguramos que estamos trabajando con la temperatura
-    )
-
-    # Realizamos la agregación para calcular los valores necesarios
-    aggregation = data.annotate(check_value=Avg('avg_value')) \
-        .select_related('station', 'measurement') \
+        measurement__name='temperatura'  # Aseguramos que estamos trabajando con la temperatura
+    ).select_related('station', 'measurement') \
         .select_related('station__user', 'station__location') \
         .select_related('station__location__city', 'station__location__state',
-                        'station__location__country') \
-        .values('check_value', 'station__user__username',
-                'measurement__name',
-                'measurement__max_value',
-                'measurement__min_value',
-                'station__location__city__name',
-                'station__location__state__name',
-                'station__location__country__name')
+                        'station__location__country')
 
-    # Ahora calculamos la variación de la temperatura
+    # Obtenemos los valores de temperatura
+    temperatures = list(data.values_list('avg_value', flat=True).order_by('base_time'))
 
-    
+    if not temperatures:
+        print("No hay datos suficientes para analizar.")
+        return
 
-    for item in aggregation:
-        temperatures = [item['check_value'] for item in aggregation]
-        initial_temp = temperatures[0]  # Tomamos el primer valor del período
-        current_temp = temperatures[-1]  # Tomamos el valor más reciente
-        variation = abs(current_temp - initial_temp)  # Calculamos la variación absoluta
-        
-        # Obtenemos los detalles necesarios para la alerta
-        variable = item["measurement__name"]
-        max_value = item["measurement__max_value"] or 0
-        min_value = item["measurement__min_value"] or 0
-        country = item['station__location__country__name']
-        state = item['station__location__state__name']
-        city = item['station__location__city__name']
-        user = item['station__user__username']
+    # Calculamos la variación
+    initial_temp = temperatures[0]  # Tomamos el primer valor del período
+    current_temp = temperatures[-1]  # Tomamos el valor más reciente
+    variation = abs(current_temp - initial_temp)  # Calculamos la variación absoluta
 
-        print(f"Variación de {variable} en los últimos 30 minutos: {variation}°C")
+    # Obtenemos los detalles necesarios para la alerta
+    latest_item = data.last()
+    variable = latest_item.measurement.name
+    max_value = latest_item.measurement.max_value or 0
+    min_value = latest_item.measurement.min_value or 0
+    country = latest_item.station.location.country.name
+    state = latest_item.station.location.state.name
+    city = latest_item.station.location.city.name
+    user = latest_item.station.user.username
 
-        # Evaluamos si la variación es mayor a un umbral (ejemplo: 5°C)
-        print(f"Variacion {variation} min_value {min_value}")
-        if variation > min_value:
-            message = f"ALERT: Variación de {variable} ha excedido el límite de {min_value} °C. " \
-                        f"Variación actual: {variation}°C"
-            topic = f'{country}/{state}/{city}/{user}/in'
+    print(f"Variación de {variable} en los últimos 30 minutos: {variation}°C")
 
-            # Publicamos la alerta
-            print(f"{datetime.now()} Enviando alerta a {topic} por {variable}")
-            client.publish(topic, message)
+    # Evaluamos si la variación es mayor a un umbral (ejemplo: 5°C)
+    threshold = 5  # Define un umbral fijo
+    if variation > threshold:
+        message = f"ALERT: Variación de {variable} ha excedido el límite de {threshold} °C. " \
+                    f"Variación actual: {variation}°C"
+        topic = f'{country}/{state}/{city}/{user}/in'
+
+        # Publicamos la alerta
+        print(f"{datetime.now()} Enviando alerta a {topic} por {variable}")
+        client.publish(topic, message)
 
 
 def on_connect(client, userdata, flags, rc):
