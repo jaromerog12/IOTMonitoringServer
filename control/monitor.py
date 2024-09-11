@@ -68,19 +68,21 @@ def analyze_temperature_variation():
     )
 
     # Realizamos la agregación para calcular los valores necesarios
-    aggregation = data.annotate(avg_value=Avg('value')) \
-        .select_related('station', 'measurement') \
-        .select_related('station__user', 'station__location') \
-        .select_related('station__location__city', 'station__location__state', 'station__location__country') \
-        .values('avg_value', 'station__user__username', 'measurement__name',
-                'measurement__max_value', 'measurement__min_value',
-                'station__location__city__name', 'station__location__state__name',
-                'station__location__country__name')
+    aggregation = data.annotate(
+        temperature_avg=Avg('value')  # Renombramos 'avg_value' a 'temperature_avg'
+    ).select_related('station', 'measurement') \
+     .select_related('station__user', 'station__location') \
+     .select_related('station__location__city', 'station__location__state', 'station__location__country') \
+     .values('temperature_avg', 'station__user__username', 'measurement__name',
+             'measurement__max_value', 'measurement__min_value',
+             'station__location__city__name', 'station__location__state__name',
+             'station__location__country__name')
 
     # Ahora calculamos la variación de la temperatura
     if aggregation:
-        initial_temp = aggregation[0]['avg_value']  # Tomamos el primer valor del período
-        current_temp = aggregation.last()['avg_value']  # Tomamos el valor más reciente
+        temperatures = [item['temperature_avg'] for item in aggregation]
+        initial_temp = temperatures[0]  # Tomamos el primer valor del período
+        current_temp = temperatures[-1]  # Tomamos el valor más reciente
         variation = abs(current_temp - initial_temp)  # Calculamos la variación absoluta
 
         print(f"Variación de temperatura en los últimos 30 minutos: {variation}°C")
