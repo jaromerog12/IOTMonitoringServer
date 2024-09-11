@@ -58,6 +58,53 @@ def analyze_data():
     print(len(aggregation), "dispositivos revisados")
     print(alerts, "alertas enviadas")
 
+def analyze_temperature_variation():
+    print("Analizando la variación de temperatura...")
+
+    # Filtramos los datos de la última media hora
+    data = Data.objects.filter(
+        base_time__gte=datetime.now() - timedelta(minutes=30),
+        measurement__name='temperature'  # Aseguramos que estamos trabajando con la temperatura
+    )
+
+    # Realizamos la agregación para calcular los valores necesarios
+    aggregation = data.annotate(avg_value=Avg('value')) \
+        .select_related('station', 'measurement') \
+        .select_related('station__user', 'station__location') \
+        .select_related('station__location__city', 'station__location__state', 'station__location__country') \
+        .values('avg_value', 'station__user__username', 'measurement__name',
+                'measurement__max_value', 'measurement__min_value',
+                'station__location__city__name', 'station__location__state__name',
+                'station__location__country__name')
+
+    # Ahora calculamos la variación de la temperatura
+    if aggregation:
+        initial_temp = aggregation[0]['avg_value']  # Tomamos el primer valor del período
+        current_temp = aggregation.last()['avg_value']  # Tomamos el valor más reciente
+        variation = abs(current_temp - initial_temp)  # Calculamos la variación absoluta
+
+        print(f"Variación de temperatura en los últimos 30 minutos: {variation}°C")
+
+        for item in aggregation:
+            # Obtenemos los detalles necesarios para la alerta
+            variable = item["measurement__name"]
+            max_value = item["measurement__max_value"] or 0
+            min_value = item["measurement__min_value"] or 0
+            country = item['station__location__country__name']
+            state = item['station__location__state__name']
+            city = item['station__location__city__name']
+            user = item['station__user__username']
+
+            # Evaluamos si la variación es mayor a un umbral (ejemplo: 5°C)
+            if variation > max_value:
+                message = f"ALERT: Variación de {variable} ha excedido el límite de {max_value} °C. " \
+                          f"Variación actual: {variation}°C"
+                topic = f'{country}/{state}/{city}/{user}/in'
+
+                # Publicamos la alerta
+                print(f"{datetime.now()} Enviando alerta a {topic} por {variable}")
+                client.publish(topic, message)
+
 
 def on_connect(client, userdata, flags, rc):
     '''
@@ -103,10 +150,11 @@ def setup_mqtt():
 
 def start_cron():
     '''
-    Inicia el cron que se encarga de ejecutar la función analyze_data cada 5 minutos.
+    Inicia el cron que se encarga de ejecutar la función analyze_data cada 1 minutos.
     '''
     print("Iniciando cron...")
-    schedule.every(1).minutes.do(analyze_data)
+    #schedule.every(1).minutes.do(analyze_data)
+    schedule.every(1).minutes.do(analyze_temperature_variation)
     print("Servicio de control iniciado")
     while 1:
         schedule.run_pending()
