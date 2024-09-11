@@ -83,13 +83,14 @@ def analyze_temperature_variation():
 
     # Ahora calculamos la variación de la temperatura
 
-    print(f"Variación de temperatura en los últimos 30 minutos: {variation}°C")
+    
 
     for item in aggregation:
         temperatures = [item['check_value'] for item in aggregation]
         initial_temp = temperatures[0]  # Tomamos el primer valor del período
         current_temp = temperatures[-1]  # Tomamos el valor más reciente
         variation = abs(current_temp - initial_temp)  # Calculamos la variación absoluta
+        
         # Obtenemos los detalles necesarios para la alerta
         variable = item["measurement__name"]
         max_value = item["measurement__max_value"] or 0
@@ -98,6 +99,8 @@ def analyze_temperature_variation():
         state = item['station__location__state__name']
         city = item['station__location__city__name']
         user = item['station__user__username']
+
+        print(f"Variación de {variable} en los últimos 30 minutos: {variation}°C")
 
         # Evaluamos si la variación es mayor a un umbral (ejemplo: 5°C)
         print(f"Variacion {variation} min_value {min_value}")
