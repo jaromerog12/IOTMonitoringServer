@@ -81,8 +81,6 @@ def analyze_temperature_variation():
                 'station__location__state__name',
                 'station__location__country__name')
 
-    print("Nombres de mediciones en la base de datos:")
-    print(data.values_list('measurement__name', flat=True).distinct())
     # Obtenemos los valores de temperatura
     temperatures = list(data.values_list('avg_value', flat=True).order_by('base_time'))
 
@@ -90,6 +88,7 @@ def analyze_temperature_variation():
         print("No hay datos suficientes para analizar.")
         return
 
+    print(temperatures)
     # Calculamos la variación
     initial_temp = temperatures[0]  # Tomamos el primer valor del período
     current_temp = temperatures[-1]  # Tomamos el valor más reciente
