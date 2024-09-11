@@ -88,7 +88,7 @@ def analyze_temperature_variation():
 
     # Obtener los valores de temperatura
     temperatures = get_temperature_values()
-    
+    print(temperatures)
     if not temperatures:
         print("No hay datos suficientes para analizar.")
         return
