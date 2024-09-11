@@ -63,8 +63,7 @@ def analyze_temperature_variation():
 
     # Filtramos los datos de la última media hora
     data = Data.objects.filter(
-        base_time__gte=datetime.now() - timedelta(minutes=30),
-        measurement__name='temperatura'  # Aseguramos que estamos trabajando con la temperatura
+        base_time__gte=datetime.now() - timedelta(minutes=30)
     ).select_related('station', 'measurement') \
         .select_related('station__user', 'station__location') \
         .select_related('station__location__city', 'station__location__state',
