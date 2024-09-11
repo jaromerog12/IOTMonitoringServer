@@ -64,12 +64,14 @@ def analyze_temperature_variation():
     # Filtramos los datos de la última media hora
     data = Data.objects.filter(
         base_time__gte=datetime.now() - timedelta(minutes=30),
-        measurement__name='temperature'  # Aseguramos que estamos trabajando con la temperatura
+        measurement__name='temperatura'  # Aseguramos que estamos trabajando con la temperatura
     ).select_related('station', 'measurement') \
         .select_related('station__user', 'station__location') \
         .select_related('station__location__city', 'station__location__state',
                         'station__location__country')
 
+    print("Nombres de mediciones en la base de datos:")
+    print(data.values_list('measurement__name', flat=True).distinct())
     # Obtenemos los valores de temperatura
     temperatures = list(data.values_list('avg_value', flat=True).order_by('base_time'))
 
