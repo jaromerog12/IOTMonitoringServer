@@ -107,7 +107,8 @@ def analyze_temperature_variation():
     initial_temp = temperatures[0]  # Tomamos el primer valor del período
     current_temp = temperatures.last()  # Tomamos el valor más reciente
     variation = abs(current_temp - initial_temp)  # Calculamos la variación absoluta
-
+    print(initial_temp)
+    print(current_temp)
     # Obtener los detalles necesarios para la alerta
     variable = detail["measurement__name"]
     max_value = detail["measurement__max_value"] or 0
