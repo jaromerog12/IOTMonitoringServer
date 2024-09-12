@@ -115,8 +115,6 @@ def analyze_temperature_variation():
     
     # Obtener los detalles necesarios para la alerta
     variable = detail["measurement__name"]
-    max_value = detail["measurement__max_value"] or 0
-    min_value = detail["measurement__min_value"] or 0
     country = detail['station__location__country__name']
     state = detail['station__location__state__name']
     city = detail['station__location__city__name']
