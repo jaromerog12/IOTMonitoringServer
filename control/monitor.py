@@ -104,10 +104,10 @@ def analyze_temperature_variation():
     detail = details[0]
     
     # Calcular la variación de la temperatura
-    initial_temp = temperatures[0]  # Tomamos el primer valor del período
+    initial_temp = temperatures[0][0]  # Tomamos el primer valor del período
     print("initial_temp")
     print(initial_temp)
-    current_temp = temperatures.last()  # Tomamos el valor más reciente
+    current_temp = temperatures[0].last()  # Tomamos el valor más reciente
     print("current_temp")
     print(current_temp)
     variation = abs(current_temp - initial_temp)  # Calculamos la variación absoluta
