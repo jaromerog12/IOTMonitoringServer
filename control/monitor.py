@@ -123,17 +123,19 @@ def analyze_temperature_variation():
     user = detail['station__user__username']
 
     print(f"Variación de {variable} en los últimos 60 minutos: {variation}°C")
-
+    variation_limit = 1
     # Evaluamos si la variación es mayor a un umbral (ejemplo: 5°C)
-    if variation > 1:
-        message = f"ALERT: Variación de {variable} ha excedido el límite de {max_value} °C. " \
+    if variation > variation_limit:
+        message = f"ALERT: Variación de {variable} ha excedido el límite de fluctuación de {variation_limit} °C. " \
                   f"Variación actual: {variation}°C"
-        topic = f'{country}/{state}/{city}/{user}/in'
+    else:
+        message = f"NORMAL: Variación de {variable} se ha reestablecido. " \
+                  f"Variación actual: {variation}°C"
 
-        # Publicamos la alerta
-        print(f"{datetime.now()} Enviando alerta a {topic} por {variable}")
-        client.publish(topic, message)
-
+    topic = f'{country}/{state}/{city}/{user}/in'
+    # Publicamos la alerta
+    print(f"{datetime.now()} Enviando alerta a {topic} por {variable}")
+    client.publish(topic, message)
 
 def on_connect(client, userdata, flags, rc):
     '''
