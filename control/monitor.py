@@ -105,7 +105,7 @@ def analyze_temperature_variation():
     
     # Calcular la variación de la temperatura
     initial_temp = temperatures[0]  # Tomamos el primer valor del período
-    current_temp = temperatures[-1]  # Tomamos el valor más reciente
+    current_temp = temperatures.last()  # Tomamos el valor más reciente
     variation = abs(current_temp - initial_temp)  # Calculamos la variación absoluta
 
     # Obtener los detalles necesarios para la alerta
