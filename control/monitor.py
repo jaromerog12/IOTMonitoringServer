@@ -64,7 +64,7 @@ def analyze_data():
 def get_temperature_values():
     return Data.objects.filter(
         base_time__gte=datetime.now() - timedelta(hours=1),
-        measurement__name='temperatura'
+        measurement_id__name='temperatura'
     ).values_list('avg_value', flat=True)
 
 def get_temperature_details():
