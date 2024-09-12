@@ -125,7 +125,7 @@ def analyze_temperature_variation():
     print(f"Variación de {variable} en los últimos 60 minutos: {variation}°C")
 
     # Evaluamos si la variación es mayor a un umbral (ejemplo: 5°C)
-    if variation > max_value:
+    if variation > 1:
         message = f"ALERT: Variación de {variable} ha excedido el límite de {max_value} °C. " \
                   f"Variación actual: {variation}°C"
         topic = f'{country}/{state}/{city}/{user}/in'
